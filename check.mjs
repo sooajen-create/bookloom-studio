@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {decodeText,splitChapters,newBook,blocksToHTML,makeEpub,validateBook} from './dist/core.mjs';
+const sandbox={TextEncoder,TextDecoder,Uint8Array,Uint16Array,Uint32Array,Int32Array,ArrayBuffer,DataView,console};
+vm.runInNewContext(fs.readFileSync('./dist/vendor/fflate.js','utf8'),sandbox);
+const fflate=sandbox.fflate;
+const text='序章\n一封信。\n\n第一卷 春天\n卷前语。\n\n第一章 初见\n你好，世界。\n\n第二章 重逢\n再见，春天。';
+const chapters=splitChapters(text);assert.equal(chapters.length,4);assert.equal(chapters[1].type,'volume');assert.equal(chapters[2].text,'你好，世界。');assert.equal(chapters[3].text,'再见，春天。');
+assert.equal(splitChapters('没有标题的\n一段正文')[0].text,'没有标题的\n一段正文');
+assert.equal(splitChapters('Chapter 1 Hello\nEnglish text\nChapter 2 Again\nMore text').length,2);
+assert.equal(decodeText(new TextEncoder().encode('繁體與简体')).text,'繁體與简体');
+assert.equal(decodeText(Uint8Array.from([0xff,0xfe,0x60,0x4f,0x7d,0x59])).text,'你好');
+assert.equal(decodeText(Uint8Array.from([0xc4,0xe3,0xba,0xc3]),'gb18030').text,'你好');
+assert.equal(decodeText(Uint8Array.from([0xa7,0x41,0xa6,0x6e]),'big5').text,'你好');
+const html=blocksToHTML('普通 <script>\n[[chat]]\n甲：你好\n乙：再见\n[[/]]\n[[forum|论坛]]\n1楼\n[[/]]');assert(html.includes('&lt;script&gt;'));assert.equal((html.match(/class="bubble/g)||[]).length,2);assert(html.includes('component forum'));
+const b=newBook('测试 & <书>','第一章 你好\n正文 & 特殊字符\n[[quote]]\n引用内容\n[[/]]');b.author='甲 & 乙';b.chapters[0].image='data:image/png;base64,iVBORw0KGgo=';b.cover='data:image/jpeg;base64,/9j/';b.fonts=[{name:'Demo',ext:'ttf',data:'data:font/ttf;base64,AAEA'}];validateBook(b);
+const zip=makeEpub(b,fflate.zipSync);const unpack=fflate.unzipSync(zip);assert.equal(new TextDecoder().decode(unpack.mimetype),'application/epub+zip');assert.equal(new DataView(zip.buffer,zip.byteOffset).getUint16(8,true),0);assert.equal(new TextDecoder().decode(zip.slice(30,38)),'mimetype');
+for(const file of ['META-INF/container.xml','OEBPS/content.opf','OEBPS/nav.xhtml','OEBPS/toc.ncx','OEBPS/Text/ch0.xhtml','OEBPS/Images/cover.jpg','OEBPS/Images/ch0.png','OEBPS/Fonts/font0.ttf'])assert(unpack[file],file);
+const opf=new TextDecoder().decode(unpack['OEBPS/content.opf']);assert(opf.includes('测试 &amp; &lt;书&gt;'));assert(opf.includes('properties="nav"'));assert(opf.includes('cover-image'));assert(opf.includes('font/ttf'));
+fs.mkdirSync('./test-output',{recursive:true});fs.writeFileSync('./test-output/roundtrip.epub',zip);for(const [name,bytes]of Object.entries(unpack))if(/\.(xml|xhtml|opf|ncx)$/.test(name)){const dest='./test-output/'+name;fs.mkdirSync(dest.slice(0,dest.lastIndexOf('/')),{recursive:true});fs.writeFileSync(dest,bytes)}
+vm.runInNewContext(fs.readFileSync('./dist/vendor/opencc.js','utf8'),sandbox);assert.equal(sandbox.OpenCC.Converter({from:'cn',to:'tw'})('小说转换'),'小說轉換');
+console.log('PASS: 中文/英文章节、UTF-8/UTF-16/GB18030/Big5、组件转义、EPUB ZIP/目录/元数据/字体/图片、OpenCC。');

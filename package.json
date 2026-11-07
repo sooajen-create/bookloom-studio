@@ -1,0 +1,1 @@
+{"name":"bookloom-studio","version":"0.1.0","private":true,"type":"module","description":"Local-first TXT and EPUB novel typesetting studio","scripts":{"start":"node server.cjs","test":"node check.mjs"},"license":"MIT"}
