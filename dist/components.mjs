@@ -1,3 +1,5 @@
+import {postsCSS} from './posts.mjs';
+export {renderPosts} from './posts.mjs';
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initial=name=>escape(Array.from(name.replace(/^@/,''))[0]||'人');
 
@@ -22,23 +24,6 @@ export function renderChat(lines,title='对话'){
  return `<div class="chat-block"><div class="chat-messages">${rows}</div></div>`;
 }
 
-export function renderPosts(lines,title='帖子'){
- const posts=[];let post=null;
- const flush=()=>{if(post){posts.push(post);post=null}};
- for(const raw of lines){const line=raw.trim();
-  if(/^---+$/.test(line)){flush();continue}
-  const modern=line.match(/^(.+?)\s+(@[\w\u3400-\u9fff.-]+)(?:\s*[·|｜]\s*(.+))?$/);
-  const legacy=line.match(/^(\d+楼)\s*[·.、\s]\s*(.+)$/);
-  if(modern||legacy){flush();post={name:modern?modern[1]:legacy[2],handle:modern?modern[2]:'',time:modern?(modern[3]||''):legacy[1],body:[],stats:null};continue}
-  if(!post)post={name:title||'帖子',handle:'',time:'',body:[],stats:null};
-  if(/^(?:回复|评论)\s*\d+.*(?:转发|喜欢|点赞)/.test(line)){
-   post.stats={reply:line.match(/(?:回复|评论)\s*(\d+)/)?.[1]||'',repost:line.match(/转发\s*(\d+)/)?.[1]||'',like:line.match(/(?:喜欢|点赞)\s*(\d+)/)?.[1]||''};
-  }else post.body.push(raw);
- }
- flush();
- return `<div class="post-thread">${title?`<div class="post-thread-title">${escape(title)}</div>`:''}${posts.map(p=>`<div class="tweet"><span class="tweet-avatar" aria-label="${escape(p.name)}的头像占位">${initial(p.name)}</span><div class="tweet-main"><div class="tweet-header"><span class="tweet-name">${escape(p.name)}</span>${p.handle?`<span class="tweet-handle">${escape(p.handle)}</span>`:''}${p.time?`<span class="tweet-time">· ${escape(p.time)}</span>`:''}<span class="tweet-more" aria-hidden="true">···</span></div><div class="tweet-text">${p.body.map(escape).join('<br/>')}</div><div class="tweet-actions"><span>↩ <span>${p.stats?.reply||'回复'}</span></span><span>⇄ <span>${p.stats?.repost||'转发'}</span></span><span>♡ <span>${p.stats?.like||'喜欢'}</span></span><span aria-label="分享图标">↥</span></div></div></div>`).join('')}</div>`;
-}
-
 export function renderLetter(lines,title='信件'){
  let salutation='',signature='',date='';const body=[];
  for(const line of lines){const m=line.match(/^(称呼|落款|日期)[:：]\s*(.*)$/);if(m){if(m[1]==='称呼')salutation=m[2];if(m[1]==='落款')signature=m[2];if(m[1]==='日期')date=m[2]}else body.push(line)}
@@ -55,5 +40,7 @@ export function componentCSS(ink=false){return `
 .post-thread{background:#fff;color:#0f1419;border:1px solid #e5e9ec;border-radius:14px;overflow:hidden;margin:1.5em 0;font-family:sans-serif}.post-thread-title{padding:13px 17px;font-size:.85em;font-weight:bold;border-bottom:1px solid #eff3f4}.tweet{position:relative;padding:17px 15px 15px 66px;border-bottom:1px solid #eff3f4;break-inside:auto}.tweet:last-child{border-bottom:0}.tweet-avatar{position:absolute;left:14px;top:17px;width:39px;height:39px;line-height:39px;text-align:center;border-radius:50%;background:#dcebf3;color:#44718d;font-weight:bold;font-size:.9em}.tweet-header{font-size:.78em;line-height:1.6;padding-right:15px;overflow-wrap:anywhere}.tweet-name{font-weight:bold;margin-right:5px}.tweet-handle,.tweet-time{color:#536471;margin-right:5px}.tweet-more{position:absolute;right:13px;top:16px;color:#536471;letter-spacing:1px}.tweet-text{font-size:.91em;line-height:1.75;padding:7px 0 12px;overflow-wrap:anywhere;white-space:pre-wrap}.tweet-actions{color:#647581;font-size:.75em;white-space:nowrap}.tweet-actions>span{display:inline-block;width:27%}.tweet-actions>span:last-child{width:15%;text-align:right}.tweet-actions span span{font-size:.85em}
 .letter-paper{color:#51432f;background-color:#fffbed;background-image:radial-gradient(ellipse at center,#fffef8 35%,#f9f1d7 76%,#d0b578 100%);border:1px solid #cbb582;border-top:3px solid #c4aa70;border-bottom:3px solid #bfa56b;border-radius:2px 5px 2px 4px;padding:30px 28px;margin:2em 6px;box-shadow:inset 0 0 24px #b38e4550,3px 5px 0 #dac99e,5px 8px 13px #493a2720;font-family:serif;position:relative}.letter-heading{text-align:center;font-size:.7em;letter-spacing:.3em;color:#9b875d;margin-bottom:24px}.letter-salutation{text-align:left;margin:0 0 1.4em;font-size:.95em}.letter-paragraph{margin:0 0 1em;text-indent:2em;line-height:2.1;overflow-wrap:anywhere}.letter-signature{text-align:right;margin-top:2em;line-height:2.1;font-size:.9em}
 ${ink?`.chat-block{background:transparent;color:#111}.chat-block .bubble{background:transparent!important;color:#111;box-shadow:none}.chat-narration{color:#666}.tweet-avatar{background:#ddd;color:#333}.post-thread{border-color:#999}.tweet-handle,.tweet-time,.tweet-actions{color:#555}.letter-paper{background:#fafafa;background-image:none;color:#111;box-shadow:none;border:1px solid #888}.letter-heading{color:#666}`:''}
+${postsCSS}
+${ink?'.weibo-card{background:#fff;color:#111;border-color:#aaa}.weibo-name,.weibo-comment-name,.weibo-link,.weibo-topic{color:#333}.weibo-avatar,.weibo-comment>.weibo-avatar{background:#eee;color:#333}.weibo-comments-title{border-color:#777}.weibo-subthread{background:#eee}':''}
 @media(max-width:480px){.chat-messages{padding:0}.chat-message{padding:0}.chat-block .bubble{max-width:88%;padding:10px 13px 12px}.tweet{padding-left:53px;padding-right:11px}.tweet-avatar{left:10px;width:32px;height:32px;line-height:32px}.tweet-header{font-size:.72em}.letter-paper{padding:24px 19px;margin-left:0;margin-right:4px}}
 `;}
