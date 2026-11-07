@@ -37,14 +37,14 @@ export function renderPosts(lines,title='帖子'){
   }else post.body.push(raw);
  }
  flush();
- return `<div class="post-thread"><div class="post-thread-title">${escape(title)}</div>${posts.map(p=>`<div class="tweet"><span class="tweet-avatar" aria-label="${escape(p.name)}的头像占位">${initial(p.name)}</span><div class="tweet-main"><div class="tweet-header"><span class="tweet-name">${escape(p.name)}</span>${p.handle?`<span class="tweet-handle">${escape(p.handle)}</span>`:''}${p.time?`<span class="tweet-time">· ${escape(p.time)}</span>`:''}<span class="tweet-more" aria-hidden="true">···</span></div><div class="tweet-text">${p.body.map(escape).join('<br/>')}</div><div class="tweet-actions"><span>↩ <span>${p.stats?.reply||'回复'}</span></span><span>⇄ <span>${p.stats?.repost||'转发'}</span></span><span>♡ <span>${p.stats?.like||'喜欢'}</span></span><span aria-label="分享图标">↥</span></div></div></div>`).join('')}</div>`;
+ return `<div class="post-thread">${title?`<div class="post-thread-title">${escape(title)}</div>`:''}${posts.map(p=>`<div class="tweet"><span class="tweet-avatar" aria-label="${escape(p.name)}的头像占位">${initial(p.name)}</span><div class="tweet-main"><div class="tweet-header"><span class="tweet-name">${escape(p.name)}</span>${p.handle?`<span class="tweet-handle">${escape(p.handle)}</span>`:''}${p.time?`<span class="tweet-time">· ${escape(p.time)}</span>`:''}<span class="tweet-more" aria-hidden="true">···</span></div><div class="tweet-text">${p.body.map(escape).join('<br/>')}</div><div class="tweet-actions"><span>↩ <span>${p.stats?.reply||'回复'}</span></span><span>⇄ <span>${p.stats?.repost||'转发'}</span></span><span>♡ <span>${p.stats?.like||'喜欢'}</span></span><span aria-label="分享图标">↥</span></div></div></div>`).join('')}</div>`;
 }
 
 export function renderLetter(lines,title='信件'){
  let salutation='',signature='',date='';const body=[];
  for(const line of lines){const m=line.match(/^(称呼|落款|日期)[:：]\s*(.*)$/);if(m){if(m[1]==='称呼')salutation=m[2];if(m[1]==='落款')signature=m[2];if(m[1]==='日期')date=m[2]}else body.push(line)}
  const paragraphs=body.join('\n').trim().split(/\n\s*\n/).filter(Boolean);
- return `<div class="letter-paper"><div class="letter-heading">${escape(title)}</div>${salutation?`<div class="letter-salutation">${escape(salutation)}</div>`:''}<div class="letter-body">${paragraphs.map(p=>`<div class="letter-paragraph">${p.split('\n').map(escape).join('<br/>')}</div>`).join('')}</div>${signature||date?`<div class="letter-signature">${escape(signature)}${signature&&date?'<br/>':''}${escape(date)}</div>`:''}</div>`;
+ return `<div class="letter-paper">${title?`<div class="letter-heading">${escape(title)}</div>`:''}${salutation?`<div class="letter-salutation">${escape(salutation)}</div>`:''}<div class="letter-body">${paragraphs.map(p=>`<div class="letter-paragraph">${p.split('\n').map(escape).join('<br/>')}</div>`).join('')}</div>${signature||date?`<div class="letter-signature">${escape(signature)}${signature&&date?'<br/>':''}${escape(date)}</div>`:''}</div>`;
 }
 
 // Shared by browser preview and EPUB output. Layout uses block/inline-block

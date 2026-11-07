@@ -1,4 +1,4 @@
-const CACHE='bookloom-v2';
+const CACHE='bookloom-v3';
 const ASSETS=['./','./index.html','./style.css','./app.js','./core.mjs','./components.mjs','./icon.svg','./manifest.webmanifest','./vendor/fflate.js','./vendor/opencc.js'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));self.skipWaiting()});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('bookloom-')&&k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
